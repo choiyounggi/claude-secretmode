@@ -1,0 +1,40 @@
+{
+  "name": "@younggichoi/claude-secretmode",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Leave-no-trace ephemeral Claude Code sessions on macOS — runs Claude Code on a RAM disk so transcripts, prompt history and snapshots never touch disk and evaporate on exit.",
+  "license": "MIT",
+  "author": "choiyounggi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/choiyounggi/claude-secretmode.git"
+  },
+  "homepage": "https://github.com/choiyounggi/claude-secretmode#readme",
+  "bugs": "https://github.com/choiyounggi/claude-secretmode/issues",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "incognito",
+    "secret",
+    "ephemeral",
+    "privacy",
+    "ramdisk",
+    "no-history",
+    "anthropic",
+    "macos"
+  ],
+  "bin": {
+    "claude-secretmode": "bin/claude-secretmode",
+    "csm": "bin/claude-secretmode"
+  },
+  "files": [
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "os": [
+    "darwin"
+  ]
+}
