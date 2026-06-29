@@ -18,6 +18,13 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+      - name: Verify tag matches package.json version
+        run: |
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$PKG_VERSION" != "${{ github.ref_name }}" ]; then
+            echo "ERROR: tag ${{ github.ref_name }} != package.json $PKG_VERSION"
+            exit 1
+          fi
       - name: Publish to npm
         run: npm publish --access public
         env:
