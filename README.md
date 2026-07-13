@@ -48,6 +48,7 @@ claude-secretmode 실행
     ├ CLAUDE.md·hooks·skills·plugins → 심링크 (코드·정책은 그대로 공유)
     └ transcript / history / snapshot → 전부 RAM 에만 기록
  └ claude 실행 (평소처럼 interactive)
+    └ (백그라운드) 토큰 동기화 데몬 — 키체인과 RAM 세션 중 더 최신 토큰만 반영(롤백 방지)
 [종료] → RAM 디스크 detach → 세션 흔적 증발. 본래 ~/.claude 는 무침해.
 ```
 
