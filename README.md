@@ -1,101 +1,104 @@
 # claude-secretmode
 
-**흔적을 남기지 않는** 일회용 Claude Code 세션 — macOS RAM 디스크 위에서 Claude Code를 실행해, 대화 기록·프롬프트 히스토리·파일 스냅샷이 디스크에 **애초에 쓰이지 않고** 종료 시 통째로 증발합니다.
+**English** | [한국어](README.ko.md)
 
-평소 쓰던 `claude` 자리에 `claude-secretmode`(또는 `csm`)를 치면 끝. 인증·MCP·CLAUDE.md·플러그인은 그대로 쓰면서, 그 세션의 **대화 기록·프롬프트 히스토리**가 디스크에 남지 않습니다. 본래 `~/.claude`의 대화 기록은 보존되며 오염되지 않습니다.
+**Leave-no-trace**, disposable Claude Code sessions — runs Claude Code on a macOS RAM disk, so transcripts, prompt history, and file snapshots are **never written to disk in the first place** and evaporate wholesale on exit.
 
-## 빠른 시작 (1분)
+Type `claude-secretmode` (or `csm`) where you would normally type `claude` — that's it. Auth, MCP, CLAUDE.md, and plugins all work as usual, while that session's **transcript and prompt history** never touch the disk. Your original `~/.claude` conversation history is preserved and never polluted.
 
-### 1. 사전 요구사항
+## Quick start (1 minute)
+
+### 1. Prerequisites
 
 - macOS (Apple Silicon / Intel)
-- [Claude Code](https://github.com/anthropics/claude-code) 설치 + **로그인된 상태**
-  - `npm install -g @anthropic-ai/claude-code` 후 `claude` 로 한 번 로그인
-  - 인증은 macOS 키체인(`Claude Code-credentials`)에서 상속받습니다
+- [Claude Code](https://github.com/anthropics/claude-code) installed and **logged in**
+  - `npm install -g @anthropic-ai/claude-code`, then log in once via `claude`
+  - Auth is inherited from the macOS Keychain (`Claude Code-credentials`)
 
-### 2. 설치
+### 2. Install
 
 ```bash
 # npm
 npm install -g @younggichoi/claude-secretmode
 
-# 또는 bun
+# or bun
 bun add -g @younggichoi/claude-secretmode
 ```
 
-### 3. 사용
+### 3. Use
 
 ```bash
-# 평소 claude 대신 — 이 세션은 기록이 디스크에 안 남음
+# instead of your usual claude — this session leaves no records on disk
 claude-secretmode
 
-# 짧은 별칭
+# short alias
 csm
 
-# claude 에 넘기는 인자는 그대로 전달
+# arguments are passed through to claude as-is
 claude-secretmode --model opus
 ```
 
-종료하면(Ctrl-D, `/exit`, 또는 터미널 닫기) RAM 디스크가 detach되며 그 세션의 모든 흔적이 사라집니다.
+On exit (Ctrl-D, `/exit`, or closing the terminal) the RAM disk is detached and every trace of the session disappears.
 
-## 동작 원리
+## How it works
 
 ```
-claude-secretmode 실행
- └ RAM 디스크 생성 → CLAUDE_CONFIG_DIR 로 지정
-    ├ 키체인 토큰 → <ramdisk>/.credentials.json (인증 상속)
-    ├ .claude.json (과거 프로젝트 흔적 제거), settings.json (기록 훅 비활성)
-    ├ CLAUDE.md·hooks·skills·plugins → 심링크 (코드·정책은 그대로 공유)
-    └ transcript / history / snapshot → 전부 RAM 에만 기록
- └ claude 실행 (평소처럼 interactive)
-    └ (백그라운드) 토큰 동기화 데몬 — 키체인과 RAM 세션 중 더 최신 토큰만 반영(롤백 방지)
-[종료] → RAM 디스크 detach → 세션 흔적 증발. 본래 ~/.claude 는 무침해.
+claude-secretmode starts
+ └ create a RAM disk → point CLAUDE_CONFIG_DIR at it
+    ├ Keychain token → <ramdisk>/.credentials.json (auth inherited)
+    ├ .claude.json (past-project traces stripped), settings.json (recording hooks disabled)
+    ├ CLAUDE.md · hooks · skills · plugins → symlinks (code & policy shared as-is)
+    └ transcript / history / snapshots → written to RAM only
+ └ run claude (interactive, as usual)
+    └ (background) token-sync daemon — keeps whichever token is newer,
+      Keychain or RAM session (prevents rollback)
+[exit] → RAM disk detached → session traces evaporate. The original ~/.claude is untouched.
 ```
 
-- **처음부터 디스크에 안 쌓입니다.** "종료 시 삭제(scrub)"가 아니라, 기록이 RAM 위에만 있다가 메모리째 사라지는 구조입니다.
-- 종료/재부팅하면 흔적이 남지 않고, 비정상 종료(터미널 닫힘 등) 시 남은 RAM 디스크는 다음 실행 때 자동 정리됩니다.
+- **Nothing accumulates on disk to begin with.** This is not "scrub on exit" — the records only ever exist in RAM and vanish with the memory.
+- Exit or reboot leaves no trace; if the session dies abnormally (terminal closed, etc.), the leftover RAM disk is cleaned up automatically on the next run.
 
-## 주요 기능
+## Features
 
-### 1. 기록 격리
+### 1. Record isolation
 
-대화 transcript, 프롬프트 히스토리, 파일 스냅샷이 본래 `~/.claude` 가 아니라 RAM 디스크에만 쓰입니다.
+Conversation transcripts, prompt history, and file snapshots are written only to the RAM disk — never to your original `~/.claude`.
 
-### 2. 기록·관찰 훅 비활성
+### 2. Recording/observation hooks disabled
 
-`claude-mem` 등 세션을 영구 DB로 캡처하는 플러그인/훅을 그 세션에 한해 끕니다. 보안·품질 가드 훅은 유지합니다.
+Plugins/hooks that capture sessions into a persistent DB (e.g. `claude-mem`) are turned off for that session only. Security and quality guard hooks stay on.
 
-### 3. 인증 상속
+### 3. Auth inheritance
 
-macOS 키체인의 로그인을 그대로 물려받아 별도 재로그인이 필요 없습니다. MCP OAuth(슬랙·Figma 등)도 함께 상속됩니다.
+Your macOS Keychain login is inherited as-is — no re-login needed. MCP OAuth (Slack, Figma, …) is inherited too.
 
-### 4. 동시 세션 토큰 동기화
+### 4. Concurrent-session token sync
 
-평소 `claude` 세션을 동시에 띄워도 로그인이 풀리지 않도록, 키체인과 RAM 세션 중 **더 최신 토큰**(만료가 더 나중인 쪽)을 반영합니다. RAM 세션이 스스로 토큰을 갱신한 경우 오래된 키체인 값으로 되돌리지 않습니다.
+So that a regular `claude` session running at the same time never gets logged out, the **newer token** (the one expiring later) of the Keychain and the RAM session wins. If the RAM session refreshed its own token, it is never rolled back to a stale Keychain value.
 
-## 환경 변수
+## Environment variables
 
-| 변수 | 기본값 | 설명 |
+| Variable | Default | Description |
 |------|--------|------|
-| `CLAUDE_SECRETMODE_RAM_MB` | `1024` | RAM 디스크 크기(MB). 긴 세션·큰 작업이면 키우세요. |
-| `CLAUDE_SECRETMODE_DROP_HOOKS` | (없음) | 추가로 끌 훅 스크립트 이름(콤마 구분). 예: `"my-logger.sh,audit.sh"` |
-| `CLAUDE_SECRETMODE_STRIP_ALL_HOOKS` | `0` | `1` 이면 보안 가드 포함 **모든 훅**을 끕니다(완전 무흔적). |
+| `CLAUDE_SECRETMODE_RAM_MB` | `1024` | RAM disk size (MB). Raise it for long sessions / big jobs. |
+| `CLAUDE_SECRETMODE_DROP_HOOKS` | (none) | Additional hook script names to disable (comma-separated). E.g. `"my-logger.sh,audit.sh"` |
+| `CLAUDE_SECRETMODE_STRIP_ALL_HOOKS` | `0` | `1` disables **every hook**, including security guards (fully traceless). |
 
-- 키체인 토큰은 **RAM 디스크 위 파일**(`600`)로만 두고 화면에 출력하지 않으며, 디스크 플래터에 닿지 않습니다.
-- RAM 디스크 마운트가 실제로 살아있는지 검증한 뒤에만 토큰을 씁니다(silent mount 실패 시 디스크 기록 방지). 토큰 동기화 데몬도 부모 세션이 살아있고 마운트가 유지될 때만 동작합니다.
-- 세션이 **살아있는 동안**에는 그 기록이 RAM에 존재하므로, 같은 사용자 권한의 프로세스는 접근할 수 있습니다. 종료/재부팅 시 사라집니다.
+- The Keychain token lives only as a **file on the RAM disk** (`600`), is never printed to the screen, and never touches the disk platter.
+- Tokens are written only after verifying the RAM disk mount is actually live (prevents disk writes on a silent mount failure). The token-sync daemon likewise runs only while the parent session is alive and the mount holds.
+- While the session is **alive**, its records exist in RAM, so processes with the same user privileges can access them. They disappear on exit/reboot.
 
-**무엇이 격리되고 무엇이 공유되나**
+**What is isolated vs. shared**
 
-- **RAM 격리(디스크에 안 남음)**: 대화 transcript, 프롬프트 히스토리, 파일 스냅샷, `.claude.json`, `projects/`.
-- **공유(심링크, 비-기록)**: `CLAUDE.md`·훅 스크립트·스킬·플러그인 코드·marketplace 메타데이터. claude가 이들을 런타임에 갱신하면(플러그인 캐시 등) 본래 디스크에 반영됩니다 — 대화 내용이 아닌 코드/메타입니다.
-- **훅**: `claude-mem` 등 알려진 기록·관찰 훅은 자동으로 끄지만, **사용자가 직접 만든 로깅/감사 훅까지는 자동 판별하지 못합니다.** 그런 훅이 남아 있으면 시작 시 경고가 출력되며, `CLAUDE_SECRETMODE_DROP_HOOKS` 로 지정해 끄거나 `CLAUDE_SECRETMODE_STRIP_ALL_HOOKS=1` 로 전부 끌 수 있습니다.
+- **RAM-isolated (never reaches disk)**: conversation transcripts, prompt history, file snapshots, `.claude.json`, `projects/`.
+- **Shared (symlinked, non-recording)**: `CLAUDE.md`, hook scripts, skills, plugin code, marketplace metadata. If claude updates these at runtime (plugin cache, etc.) the changes land on the original disk — that's code/metadata, not conversation content.
+- **Hooks**: known recording/observation hooks (e.g. `claude-mem`) are disabled automatically, but **custom logging/audit hooks you wrote yourself cannot be auto-detected.** If such hooks remain, a warning is printed at startup; disable them via `CLAUDE_SECRETMODE_DROP_HOOKS`, or disable everything with `CLAUDE_SECRETMODE_STRIP_ALL_HOOKS=1`.
 
-## 한계
+## Limitations
 
-- **macOS 전용** — `hdiutil` RAM 디스크와 키체인(`security`)에 의존합니다. Linux/Windows는 미지원입니다.
-- 키체인 기반으로 로그인된 Claude Code 를 전제합니다.
+- **macOS only** — depends on `hdiutil` RAM disks and the Keychain (`security`). Linux/Windows are not supported.
+- Assumes a Claude Code login backed by the Keychain.
 
-## 라이선스
+## License
 
 MIT
